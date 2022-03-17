@@ -92,3 +92,28 @@ L + 左鍵 => LinearInterpolate，(100% of A whenAlpha = 0 and 100% of B when Al
 ```
 
 設置變數名稱，選用 StaticSwitchParameter
+
+## git
+
+Edit -> Connect to Source Control -> Provider (Git bata version)
+
+## C++
+
+Tools -> New C++ Class
+
+the new file will appear in "Source" folder
+
+## git lfs (將檔案以以 TXT 的形式儲存)
+```
+// filter > 10mb file
+git lfs track 10mb.psd
+
+// lfs folder recursively
+git lfs track "MyFolder/**"
+
+// pull 下來, > 10 mb 的檔案都會變成文字檔，若需要在 Github 抓取 lfs 原始檔案
+git lfs pull
+
+// remove local file which don't exist remote
+git lfs prune
+```
