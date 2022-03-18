@@ -104,6 +104,7 @@ Tools -> New C++ Class
 the new file will appear in "Source" folder
 
 ## git lfs (將檔案以以 TXT 的形式儲存)
+### Github 的 LFS 容量為 1GB (free account)
 ```
 // filter > 10mb file
 git lfs track 10mb.psd
