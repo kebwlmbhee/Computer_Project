@@ -1,4 +1,4 @@
-# UE5 Tutorial
+* # UE5 Tutorial
 URL: https://github.com/kebwlmbhee/Computer_Project
 
 Source: https://www.bilibili.com/video/BV1Ly4y1579C
@@ -53,6 +53,8 @@ Ctrl + L + 移動滑鼠 => 控制太陽光照的時間
 
 END 鍵 => 使物件貼平地面
 
+~ => open console command
+
 ## 側欄
 default 為隱藏側欄
 
@@ -103,7 +105,7 @@ Tools -> New C++ Class
 
 the new file will appear in "Source" folder
 
-## git lfs (將檔案以以 TXT 的形式儲存)
+## git LFS(---)
 ### Github 的 LFS 容量為 1GB (free account)
 ```
 // filter > 10mb file
@@ -118,3 +120,38 @@ git lfs pull
 // remove local file which don't exist remote
 git lfs prune
 ```
+
+## Viewport
+Window -> Load Layout -> Default
+
+## Light
+### Mobility
+![mobility](mobility.png)
+```
+Static -> 僅對靜態網格體(Static Mesh)做出陰影(baking lighting 前)，對動態物體應產生的陰影不響應。離線(開發中)烘焙光照，不影響遊戲性能
+Stationary -> 不支援動態物體，但支援運行中可改變顏色、強度而不需 rebuild
+Movable -> 支援所有靜動態物體的陰影，開發中不烘焙，全動態烘焙，影響遊戲性能
+```
+## Point Light
+### Intensity
+強度
+### Attention Radius
+影響範圍
+### Source Radius
+燈泡大小
+### Soft Source Radius
+燈泡柔和度大小
+### Source Length
+燈泡形狀(長燈管 etc)
+### Temperature
+色溫(暖、冷)
+
+## Spot Light
+### Outer Cone Angle
+照明分散程度
+### Inner Cone Angle
+增加內部照明範圍強度
+
+## Rect Light
+### Source Texture
+可改變 Texture，於場景中投射
