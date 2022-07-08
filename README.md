@@ -1,4 +1,4 @@
-* # UE5 Tutorial
+# UE5 Tutorial
 URL: https://github.com/kebwlmbhee/Computer_Project
 
 Source: https://www.bilibili.com/video/BV1Ly4y1579C
@@ -29,7 +29,7 @@ R => 物件縮放軸
 **F => 聚焦物件**
 
 ## 上方圖示快捷
-![Camera_Speed](Camera_Speed.png)
+![Camera_Speed](README_Picture/Camera_Speed.png)
     
 左三依序分別對應平移、旋轉、縮放
 
@@ -126,7 +126,7 @@ Window -> Load Layout -> Default
 
 ## Light
 ### Mobility
-![mobility](mobility.png)
+![mobility](README_Picture/mobility.png)
 ```
 Static -> 僅對靜態網格體(Static Mesh)做出陰影(baking lighting 前)，對動態物體應產生的陰影不響應。離線(開發中)烘焙光照，不影響遊戲性能
 Stationary -> 不支援動態物體，但支援運行中可改變顏色、強度而不需 rebuild
@@ -159,10 +159,10 @@ Movable -> 支援所有靜動態物體的陰影，開發中不烘焙，全動態
 
 ## UE5 Hardware RT
 
-![Cine.png](Cine.png)
+![Cine.png](README_Picture/Cine.png)
 
-![Cine_L.png](Cine_L.png)
+![Cine_L.png](README_Picture/Cine_L.png)
 
 ## UE5 Lumen Software RT
 
-![Software_RT_Material](Software_RT_Material.png)
+![Software_RT_Material](README_Picture/Software_RT_Material.png)
