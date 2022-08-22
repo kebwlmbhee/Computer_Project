@@ -242,15 +242,14 @@ Please re-install TranslucentMaterialLightRay plugin.\
 			UTextureRenderTargetCube::StaticClass(),
 			*Name,
 			EObjectFlags::RF_Public | EObjectFlags::RF_Standalone);
-
-		CaptureCube->SetRenderTargetCubeInfo(RenderTargetCube);
-		CaptureCube->SetHiddenActors(ArrayActor);
 		
 		// Save asset
 		FAssetRegistryModule::AssetCreated(RenderTargetCube);
 		RenderTargetCube->MarkPackageDirty();
 		RenderTargetCube->PostEditChange();
 	}
+	CaptureCube->SetRenderTargetCubeInfo(RenderTargetCube);
+	CaptureCube->SetHiddenActors(ArrayActor);
 
 	// Error Message
 	if (!RenderTargetCube)

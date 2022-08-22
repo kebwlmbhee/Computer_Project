@@ -45,6 +45,15 @@ void ATMLR_CaptureCube::SetRenderTargetCubeInfo(UTextureRenderTargetCube* Render
 
 void ATMLR_CaptureCube::SetHiddenActors(AActor* HiddenActor)
 {
-	CaptureComponentCube->HiddenActors.Add(HiddenActor);
+	// Check if HiddenActor is exist or not
+	if (CaptureComponentCube->HiddenActors.IsEmpty())
+		CaptureComponentCube->HiddenActors.Add(HiddenActor);
+
+	// Traverse to check if HiddenActor is exist or not
+	for (auto& itor : CaptureComponentCube->HiddenActors)
+	{
+		if (itor.Get()->GetActorNameOrLabel() != HiddenActor->GetActorNameOrLabel())
+			CaptureComponentCube->HiddenActors.Add(HiddenActor);
+	}
 }
 
