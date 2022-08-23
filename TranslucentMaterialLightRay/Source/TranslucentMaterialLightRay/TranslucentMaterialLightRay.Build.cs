@@ -7,7 +7,9 @@ public class TranslucentMaterialLightRay : ModuleRules
 	public TranslucentMaterialLightRay(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+
+		bUsePrecompiled = true;
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
