@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright:       Copyright (C) 2022 kebwlmbhee
 
 using UnrealBuildTool;
 

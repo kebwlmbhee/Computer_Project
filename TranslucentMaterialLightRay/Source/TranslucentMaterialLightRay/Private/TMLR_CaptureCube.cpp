@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright:       Copyright (C) 2022 kebwlmbhee
 
 
 #include "TMLR_CaptureCube.h"

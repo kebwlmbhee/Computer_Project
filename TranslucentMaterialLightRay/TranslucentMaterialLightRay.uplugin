@@ -3,12 +3,12 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "TranslucentMaterialLightRay",
-	"Description": "",
+	"Description": "kebwlmbhee created",
 	"Category": "Other",
 	"CreatedBy": "kebwlmbhee",
 	"CreatedByURL": "",
 	"DocsURL": "",
-	"MarketplaceURL": "",
+	"MarketplaceURL": "com.epicgames.launcher: //ue/marketplace/product/7887b819e31c4cc9ac767df774387259",
 	"SupportURL": "",
 	"EngineVersion": "5.0.0",
 	"CanContainContent": true,
@@ -17,7 +17,10 @@
 		{
 			"Name": "TranslucentMaterialLightRay",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64"
+			]
 		}
 	],
 	"Plugins": [
