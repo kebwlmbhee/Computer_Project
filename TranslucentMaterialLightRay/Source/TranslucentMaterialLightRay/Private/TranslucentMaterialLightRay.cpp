@@ -10,7 +10,6 @@
 #include "Engine/StaticMeshActor.h"
 #include "UObject/Object.h"
 #include "TMLR_Actor.h"
-#include "TMLR_CaptureCube.h"
 #include "Components/MeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialExpressionTextureSampleParameterCube.h"
@@ -28,7 +27,7 @@ static const FName TranslucentMaterialLightRayTabName("TranslucentMaterialLightR
 void FTranslucentMaterialLightRayModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
+
 	FTranslucentMaterialLightRayStyle::Initialize();
 	FTranslucentMaterialLightRayStyle::ReloadTextures();
 
@@ -82,27 +81,55 @@ void FTranslucentMaterialLightRayModule::PluginButtonClicked()
 			Actor->Tags.Add(FName("TMLR_TAG"));
 
 			// Message Text
-			DialogText = FText::FromString("Create TranslucentMaterialLightRay Actor!");
+			DialogText = FText::FromString("Create TMLR_Actor!");
 			FMessageDialog::Open(EAppMsgType::Ok, DialogText);
-
-			// GEditor->RedrawLevelEditingViewports(true);		// Can not put behind else clause
+			return;
 		}
 		// If tag is detected
 		else
 		{
 			Actor = (ATMLR_Actor*)TargetTagActor[0];
+
+			if (Actor->DeleteSceneCaptureCube)
+			{
+				DeleteExistSceneCaptureCube(Actor->TwoDimensionalArray);
+				return;
+			}
+
+			TwoDimensionalArrayNum = Actor->TwoDimensionalArray.Num();
+			if (!TwoDimensionalArrayNum)
+			{
+				DialogText = FText::FromString("The element of TwoDimensionalArray is empty!");
+				ErrorText(DialogText);
+				return;
+			}
+
 			// Message Text
-			DialogText = FText::FromString("\
-TranslucentMaterialLightRay Actor is Already Exist!\n\n\
-             The number of Target Actor(s): " + FString::FromInt(int32(Actor->ReturnTMLR_ActorArray().Num())) + "\n\
-                            Traverse Array?\
-");
+			FString TempString;
+			                      
+			TempString = "          TMLR_Actor is already exist!\n\n";
+			for (int i = 0; i < TwoDimensionalArrayNum; ++i)
+			{
+				TempString += "(RES: "
+					+ Actor->TwoDimensionalArray[i].Resolution.ToString()
+					+ ")The number of Target Actors : "
+					+ FString::FromInt(int32(Actor->TwoDimensionalArray[i].ArrayActor.Num()))
+					+ "\n";
+			}
+			TempString += '\n';
+			TempString += "             Create material instances?";
+
+			DialogText = FText::FromString(TempString);
 			EAppReturnType::Type const Choice = FMessageDialog::Open(EAppMsgType::YesNo, DialogText);
 			{
 				// Click Yes Button => Check Array
 				if (Choice == EAppReturnType::Type::Yes)
 				{
-					CheckTMLRArray(Actor->ReturnTMLR_ActorArray());
+					CheckTMLRArray(Actor->TwoDimensionalArray);
+
+					// Final Message
+					DialogText = FText::FromString("Everything is done!");
+					FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 				}
 				// Click No button or close window
 			}
@@ -135,67 +162,98 @@ void FTranslucentMaterialLightRayModule::RegisterMenus()
 	}
 }
 
-void FTranslucentMaterialLightRayModule::CheckTMLRArray(TArray<AActor*> TargetArray)
+void FTranslucentMaterialLightRayModule::CheckTMLRArray(TArray<FEncapsule> Target2DArray)
 {
-	// Initialize ArrayActor
-	ArrayActor = nullptr;
-
-	// Traverse ATMLR_Actor array
-	for (int i = 0; i < TargetArray.Num(); ++i)
+	// Initialize TargetActor
+	TargetActor = nullptr;
+	
+	// Traverse TwoDimensionalArray
+	for (int i = 0; i < TwoDimensionalArrayNum; ++i)
 	{
-		ArrayActor = TargetArray[i];
-		if (ArrayActor == nullptr)
-			continue;
+		// Get USTRUCT FEncapsule
+		FEncapsule TargetArray = Target2DArray[i];
+		for (int j = 0; j < TargetArray.ArrayActor.Num(); ++j)
+		{
+			// Get TArray<AActor*> and Resolution
+			TargetActor = TargetArray.ArrayActor[j];
+			CurrentActorResolution = FCString::Atoi(*TargetArray.Resolution.ToString());
 
-		if (!IsContinue)
-			return;
+			if (TargetActor == nullptr)
+				continue;
 
-		TraverseArrayActorAttached();
-		GenerateMaterial();
-		ReplaceTargetActorStaticMesh();
+			if (!IsContinue)
+				return;
+
+			TraverseTargetActorAttached();
+			GenerateMaterial();
+			ReplaceTargetActorStaticMesh();
+		}
 	}
-
-	// Final Message
-	DialogText = FText::FromString("Everything is Already Done!");
-	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
 }
 
-void FTranslucentMaterialLightRayModule::TraverseArrayActorAttached()
+void FTranslucentMaterialLightRayModule::TraverseTargetActorAttached()
 {
 	if (!IsContinue)
 		return;
 
-	// Traverse ArrayActor AttachActor to find ATMLR_CaptureCube
+	CaptureCube = nullptr;
+	CaptureComponentCube = nullptr;
+
+	// Traverse TargetActor AttachActor to find ASceneCaptureCube
 	TArray<AActor*> AttachedActors;
-	ArrayActor->GetAttachedActors(AttachedActors);
+	TargetActor->GetAttachedActors(AttachedActors);
 
 	if (AttachedActors.IsEmpty())
 	{
-		GenerateCaptureCube();
+		GenerateSceneCaptureCube();
 	}
 
 	for (int i = 0; i < AttachedActors.Num(); ++i)
 	{
-		// If find ATMLR_CaptureCube
-		if (AttachedActors[i]->GetClass()->GetName() == "TMLR_CaptureCube")
+		// If find SceneCaptureCube
+		if (AttachedActors[i]->GetClass()->GetName() == "SceneCaptureCube")
 		{
-			CaptureCube = (ATMLR_CaptureCube*)AttachedActors[i];
+			CaptureCube = (ASceneCaptureCube*)AttachedActors[i];
 			break;
 		}
-		// if not find ATMLR_CaptureCube
+		// if not find SceneCaptureCube
 		else if (i == AttachedActors.Num() - 1)
 		{
-			GenerateCaptureCube();
+			GenerateSceneCaptureCube();
 		}
+	}
+
+	// Error Message
+	if (!CaptureCube)
+	{
+		DialogText = FText::FromString("\
+              Can not find SceneCaptureCube!\n\n\
+Please re-install TranslucentMaterialLightRay plugin.\
+");
+		ErrorText(DialogText);
+	}
+
+	// Assign CaptureComponentCube
+	CaptureComponentCube = nullptr;
+	CaptureComponentCube = CaptureCube->GetCaptureComponentCube();
+
+	// Error Message
+	if (!CaptureComponentCube)
+	{
+		DialogText = FText::FromString("\
+          Can not find CaptureComponentCube!\n\n\
+Please re-install TranslucentMaterialLightRay plugin.\
+");
+		ErrorText(DialogText);
 	}
 }
 
-void FTranslucentMaterialLightRayModule::GenerateCaptureCube()
+void FTranslucentMaterialLightRayModule::GenerateSceneCaptureCube()
 {
 	// Spawn CaptureCube
-	CaptureCube = World->SpawnActor<ATMLR_CaptureCube>(FVector(0, 0, 0), FRotator::ZeroRotator);
+	CaptureCube = World->SpawnActor<ASceneCaptureCube>(FVector(0, 0, 0), FRotator::ZeroRotator);
 	// SetParent
-	CaptureCube->AttachToActor(ArrayActor, FAttachmentTransformRules::KeepRelativeTransform);
+	CaptureCube->AttachToActor(TargetActor, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
 
@@ -212,7 +270,7 @@ void FTranslucentMaterialLightRayModule::GenerateMaterial()
 	if (!M_Translucent)
 	{
 		DialogText = FText::FromString("\
-                  Can not Find M_Translucent!\n\n\
+				  Can not find M_Translucent!\n\n\
 Please re-install TranslucentMaterialLightRay plugin.\
 ");
 		ErrorText(DialogText);
@@ -221,7 +279,7 @@ Please re-install TranslucentMaterialLightRay plugin.\
 	// Try to find Render Target Cube in Content Browser
 	FString PackageName = "/Game/TMLR/TMLR_TC/";
 	FString MaterialBaseName = "RenderTargetCube_";
-	FString Name = MaterialBaseName += ArrayActor->GetActorNameOrLabel();
+	FString Name = MaterialBaseName += TargetActor->GetActorNameOrLabel();
 	FString PackagePath = PackageName + Name;
 
 	RenderTargetCube = nullptr;
@@ -231,7 +289,7 @@ Please re-install TranslucentMaterialLightRay plugin.\
 		// Loading asset
 		RenderTargetCube = LoadObject<UTextureRenderTargetCube>(nullptr, *(PackageName + Name));
 	}
-	// If not find 
+	// If not find
 	else
 	{
 		// Create Package
@@ -242,20 +300,32 @@ Please re-install TranslucentMaterialLightRay plugin.\
 			UTextureRenderTargetCube::StaticClass(),
 			*Name,
 			EObjectFlags::RF_Public | EObjectFlags::RF_Standalone);
-		
-		// Save asset
-		FAssetRegistryModule::AssetCreated(RenderTargetCube);
-		RenderTargetCube->MarkPackageDirty();
-		RenderTargetCube->PostEditChange();
 	}
-	CaptureCube->SetRenderTargetCubeInfo(RenderTargetCube);
-	CaptureCube->SetHiddenActors(ArrayActor);
+
+	RenderTargetCube->SizeX = CurrentActorResolution;
+	// Save asset
+	FAssetRegistryModule::AssetCreated(RenderTargetCube);
+	RenderTargetCube->MarkPackageDirty();
+	RenderTargetCube->PostEditChange();
+
+	// Check if TargetActor is exist or not
+	if(CaptureComponentCube->HiddenActors.IsEmpty())
+		CaptureComponentCube->HiddenActors.Add(TargetActor);
+
+	// Traverse to check if TargetActor is exist or not
+	for (auto& itor : CaptureComponentCube->HiddenActors)
+	{
+		if(itor.Get()->GetActorNameOrLabel() != TargetActor->GetActorNameOrLabel())
+			CaptureComponentCube->HiddenActors.Add(TargetActor);
+	}
+
+	CaptureComponentCube->TextureTarget = RenderTargetCube;
 
 	// Error Message
 	if (!RenderTargetCube)
 	{
 		DialogText = FText::FromString("\
-             Can not Spawn RenderTargetCube!\n\n\
+			 Can not spawn RenderTargetCube!\n\n\
 Please re-install TranslucentMaterialLightRay plugin.\
 ");
 		ErrorText(DialogText);
@@ -271,7 +341,7 @@ Please re-install TranslucentMaterialLightRay plugin.\
 	// Try to find Material Instance in Content Browser
 	PackageName = "/Game/TMLR/TMLR_Mesh/";
 	MaterialBaseName = "MI_Translucent_";
-	Name = MaterialBaseName += ArrayActor->GetActorNameOrLabel();
+	Name = MaterialBaseName += TargetActor->GetActorNameOrLabel();
 	PackagePath = PackageName + Name;
 
 	MI_Translucent = nullptr;
@@ -288,7 +358,7 @@ Please re-install TranslucentMaterialLightRay plugin.\
 		FAssetToolsModule& AssetToolsModule =
 			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 
-		// Spawn Material Instance
+		// Generate Material Instance
 		MI_Translucent = CastChecked<UMaterialInstanceConstant>(
 			AssetToolsModule.Get().CreateAsset(Name,
 				FPackageName::GetLongPackagePath(PackageName),
@@ -301,11 +371,13 @@ Please re-install TranslucentMaterialLightRay plugin.\
 	if (!MI_Translucent)
 	{
 		DialogText = FText::FromString("\
-               Can not Spawn MI_Translucent!\n\n\
+		         Can not spawn MI_Translucent!\n\n\
 Please re-install TranslucentMaterialLightRay plugin.\
 ");
 	ErrorText(DialogText);
 	}
+
+
 
 	// Set Material Instance parameter
 	MI_Translucent->SetTextureParameterValueEditorOnly(FName("Reflection_Param"), RenderTargetCube);
@@ -315,7 +387,6 @@ Please re-install TranslucentMaterialLightRay plugin.\
 	MI_Translucent->SetFlags(RF_Standalone);
 	MI_Translucent->MarkPackageDirty();
 	MI_Translucent->PostEditChange();
-
 }
 
 void FTranslucentMaterialLightRayModule::ReplaceTargetActorStaticMesh()
@@ -328,7 +399,7 @@ void FTranslucentMaterialLightRayModule::ReplaceTargetActorStaticMesh()
 
 	// Find target actor components
 	TArray<UStaticMeshComponent*> Components;
-	ArrayActor->GetComponents(Components);
+	TargetActor->GetComponents(Components);
 
 	for (int32 i = 0; i < Components.Num(); ++i)
 	{
@@ -343,8 +414,8 @@ void FTranslucentMaterialLightRayModule::ReplaceTargetActorStaticMesh()
 		else if (i == Components.Num() - 1)
 		{
 			DialogText = FText::FromString("\
-Can not find StaticMeshComponents of " + ArrayActor->GetActorNameOrLabel() + ".\n\n\
-         Skip this actor and continue execution?\
+Can not find StaticMeshComponents of " + TargetActor->GetActorNameOrLabel() + ".\n\n\
+		 Skip this actor and continue execution?\
 ");
 			EAppReturnType::Type const Choice = FMessageDialog::Open(EAppMsgType::YesNo, DialogText);
 			{
@@ -359,6 +430,57 @@ Can not find StaticMeshComponents of " + ArrayActor->GetActorNameOrLabel() + ".\
 		}
 	}
 }
+
+void FTranslucentMaterialLightRayModule::DeleteExistSceneCaptureCube(TArray<FEncapsule> Target2DArray)
+{
+	// Initialize TargetActor
+	TargetActor = nullptr;
+
+	DialogText = FText::FromString("\
+Scene capture will no longer support for real time.\n\
+                   Do you want to continue?");
+	EAppReturnType::Type const Choice = FMessageDialog::Open(EAppMsgType::YesNo, DialogText);
+	{
+		// Click Yes Button => continue
+		if (Choice == EAppReturnType::Type::Yes);
+		// Click No button or close window
+		else
+			return;
+	}
+
+	// Traverse TwoDimensionalArray
+	for (int i = 0; i < TwoDimensionalArrayNum; ++i)
+	{
+		// Get USTRUCT FEncapsule
+		FEncapsule TargetArray = Target2DArray[i];
+		for (int j = 0; j < TargetArray.ArrayActor.Num(); ++j)
+		{
+			// Get TArray<AActor*>
+			TargetActor = TargetArray.ArrayActor[j];
+			if (!TargetActor)
+				continue;
+
+			// Find Attached Actors
+			TArray<AActor*> AttachedActors;
+			TargetActor->GetAttachedActors(AttachedActors);		
+
+			// Traverse Attached Actors
+			for (int k = 0; k < AttachedActors.Num(); ++k)
+			{
+				// If find SceneCaptureCube
+				if (AttachedActors[k]->GetClass() == ASceneCaptureCube::StaticClass())
+				{
+					CaptureCube = (ASceneCaptureCube*)AttachedActors[k];
+					CaptureCube->Destroy();
+				}
+			}
+		}
+	}
+	Actor->DeleteSceneCaptureCube = false;
+	DialogText = FText::FromString("SceneCaptureCubes were successfully deleted");
+	FMessageDialog::Open(EAppMsgType::Ok, DialogText);
+}
+
 
 void FTranslucentMaterialLightRayModule::ErrorText(FText DialogMessage)
 {

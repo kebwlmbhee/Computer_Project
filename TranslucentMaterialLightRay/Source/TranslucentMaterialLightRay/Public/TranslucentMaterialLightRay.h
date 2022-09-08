@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceConstant.h"
+#include "Components/SceneCaptureComponentCube.h"
+#include "Engine/SceneCaptureCube.h"
 #include "Modules/ModuleManager.h"
 
 class FToolBarBuilder;
@@ -24,11 +26,12 @@ public:
 private:
 	void RegisterMenus();
 
-	void CheckTMLRArray(TArray<AActor*>);
-	void TraverseArrayActorAttached();
-	void GenerateCaptureCube();
+	void CheckTMLRArray(TArray<FEncapsule>);
+	void TraverseTargetActorAttached();
+	void GenerateSceneCaptureCube();
 	void GenerateMaterial();
 	void ReplaceTargetActorStaticMesh();
+	void DeleteExistSceneCaptureCube(TArray<FEncapsule>);
 	void ErrorText(FText);
 
 private:
@@ -36,28 +39,41 @@ private:
 
 	// Spawn ATMLR_Actor
 	ATMLR_Actor* Actor;
-	// Spawn SceneCaptureCube
-	ATMLR_CaptureCube* CaptureCube;
 
 	// Check if ATMLR in level or not, TargetTagActor at least one AActor
 	TArray<AActor*> TargetTagActor;
 
 	// Traverse TMLR_Actor array
-	AActor* ArrayActor;
+	AActor* TargetActor;
 
 	// Get Material in the plugin Content folder
-	UPROPERTY(VisibleAnyWhere, Category = "Materials")
-	UMaterial* M_Translucent = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Materials")
+	UMaterial* M_Translucent;
 	// Spawn Material Instance
-	UPROPERTY(VisibleAnyWHere, Category = "Materials")
-	UMaterialInstanceConstant* MI_Translucent = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "Materials")
+	UMaterialInstanceConstant* MI_Translucent;
+
 	// Spawn RenderTargetCube
 	UTextureRenderTargetCube* RenderTargetCube;
 
+	// Get current Resolution
+	UPROPERTY(VisibleAnywhere, Category = "Materials")
+	int32 CurrentActorResolution;
+
 	// Find current level
-	UWorld* World = nullptr;
+	UWorld* World;
 
 	bool IsContinue;
 
 	FText DialogText;
+
+	// Array.Num() and assign array number
+	int32 TwoDimensionalArrayNum;
+
+public:
+	// Spawn SceneCaptureCube
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scene Capture")
+	ASceneCaptureCube* CaptureCube;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Scene Capture")
+	USceneCaptureComponentCube* CaptureComponentCube;
 };
