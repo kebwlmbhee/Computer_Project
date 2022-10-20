@@ -49,6 +49,7 @@ private:
 	// Get Material in the plugin Content folder
 	UPROPERTY(VisibleAnywhere, Category = "Materials")
 	UMaterial* M_Translucent;
+
 	// Spawn Material Instance
 	UPROPERTY(VisibleAnywhere, Category = "Materials")
 	UMaterialInstanceConstant* MI_Translucent;
@@ -63,12 +64,12 @@ private:
 	// Find current level
 	UWorld* World;
 
-	bool IsContinue;
+	bool isContinue;
 
 	FText DialogText;
 
 	// Array.Num() and assign array number
-	int32 TwoDimensionalArrayNum;
+	int32 TMLR_ArrayNum;
 
 public:
 	// Spawn SceneCaptureCube

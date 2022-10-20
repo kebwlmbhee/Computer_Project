@@ -15,9 +15,16 @@ struct FEncapsule
 	FEncapsule()
 	{
 		Resolution = TEXT("256");
+		// Load Material
+		FString Path = "Material'/TranslucentMaterialLightRay/M_Translucent.M_Translucent'";
+		ParentMaterial = LoadObject<UMaterial>(nullptr, *Path);
 	}
+	
+	// Parent material from material instance 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FEncapsule")
+	UMaterial* ParentMaterial = nullptr;
 
-	// Add the actor which want to generate material instance. 
+	// Add the actor which you want to generate material instance. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FEncapsule")
 	TArray<AActor*> ArrayActor;
 	
@@ -41,19 +48,13 @@ public:
 	bool DeleteSceneCaptureCube;
 
 	UFUNCTION(CallInEditor)
-	TArray<FString> GetArrayOptions() const
-	{
-		return { TEXT("1"), TEXT("2"), TEXT("3"), TEXT("4"), TEXT("5"), TEXT("6") };
-	}
-
-	UFUNCTION(CallInEditor)
 	TArray<FString> GetResolutionOptions() const
 	{
 		return { TEXT("128"), TEXT("256"), TEXT("512"), TEXT("1024"), TEXT("2048"), TEXT("4096") };
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerateMaterialInstance")
-	TArray<FEncapsule> TwoDimensionalArray;
+	TArray<FEncapsule> TMLR_Array;
 
 
 protected:

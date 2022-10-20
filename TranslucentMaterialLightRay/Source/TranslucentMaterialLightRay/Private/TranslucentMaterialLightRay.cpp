@@ -20,6 +20,7 @@
 #include "EditorAssetLibrary.h"
 #include "Engine/TextureRenderTargetCube.h"
 
+
 static const FName TranslucentMaterialLightRayTabName("TranslucentMaterialLightRay");
 
 #define LOCTEXT_NAMESPACE "FTranslucentMaterialLightRayModule"
@@ -65,7 +66,7 @@ void FTranslucentMaterialLightRayModule::PluginButtonClicked()
 	World = GCurrentLevelEditingViewportClient->GetWorld();
 
 	// Make sure if continue or not
-	IsContinue = true;
+	isContinue = true;
 
 	if (World != nullptr)
 	{
@@ -92,14 +93,14 @@ void FTranslucentMaterialLightRayModule::PluginButtonClicked()
 
 			if (Actor->DeleteSceneCaptureCube)
 			{
-				DeleteExistSceneCaptureCube(Actor->TwoDimensionalArray);
+				DeleteExistSceneCaptureCube(Actor->TMLR_Array);
 				return;
 			}
 
-			TwoDimensionalArrayNum = Actor->TwoDimensionalArray.Num();
-			if (!TwoDimensionalArrayNum)
+			TMLR_ArrayNum = Actor->TMLR_Array.Num();
+			if (!TMLR_ArrayNum)
 			{
-				DialogText = FText::FromString("The element of TwoDimensionalArray is empty!");
+				DialogText = FText::FromString("The element of TMLR_Array is empty!");
 				ErrorText(DialogText);
 				return;
 			}
@@ -108,12 +109,12 @@ void FTranslucentMaterialLightRayModule::PluginButtonClicked()
 			FString TempString;
 			                      
 			TempString = "          TMLR_Actor is already exist!\n\n";
-			for (int i = 0; i < TwoDimensionalArrayNum; ++i)
+			for (int i = 0; i < TMLR_ArrayNum; ++i)
 			{
 				TempString += "(RES: "
-					+ Actor->TwoDimensionalArray[i].Resolution.ToString()
+					+ Actor->TMLR_Array[i].Resolution.ToString()
 					+ ")The number of Target Actors : "
-					+ FString::FromInt(int32(Actor->TwoDimensionalArray[i].ArrayActor.Num()))
+					+ FString::FromInt(int32(Actor->TMLR_Array[i].ArrayActor.Num()))
 					+ "\n";
 			}
 			TempString += '\n';
@@ -125,8 +126,10 @@ void FTranslucentMaterialLightRayModule::PluginButtonClicked()
 				// Click Yes Button => Check Array
 				if (Choice == EAppReturnType::Type::Yes)
 				{
-					CheckTMLRArray(Actor->TwoDimensionalArray);
+					CheckTMLRArray(Actor->TMLR_Array);
 
+					if (!isContinue)
+						return;
 					// Final Message
 					DialogText = FText::FromString("Everything is done!");
 					FMessageDialog::Open(EAppMsgType::Ok, DialogText);
@@ -166,12 +169,32 @@ void FTranslucentMaterialLightRayModule::CheckTMLRArray(TArray<FEncapsule> Targe
 {
 	// Initialize TargetActor
 	TargetActor = nullptr;
-	
-	// Traverse TwoDimensionalArray
-	for (int i = 0; i < TwoDimensionalArrayNum; ++i)
+
+/*
+	// Load Material
+	FString Path = "Material'/TranslucentMaterialLightRay/M_Translucent.M_Translucent'";
+	M_Translucent = LoadObject<UMaterial>(nullptr, *Path);
+*/
+
+	// Traverse TMLR_Array
+	for (int i = 0; i < TMLR_ArrayNum; ++i)
 	{
 		// Get USTRUCT FEncapsule
 		FEncapsule TargetArray = Target2DArray[i];
+
+		// Error Message
+		if (TargetArray.ParentMaterial == nullptr)
+		{
+			DialogText = FText::FromString("\
+Need to assign ParentMaterial!\
+");
+			ErrorText(DialogText);
+		}
+		if (!isContinue)
+			return;
+
+		M_Translucent = TargetArray.ParentMaterial;
+
 		for (int j = 0; j < TargetArray.ArrayActor.Num(); ++j)
 		{
 			// Get TArray<AActor*> and Resolution
@@ -181,19 +204,20 @@ void FTranslucentMaterialLightRayModule::CheckTMLRArray(TArray<FEncapsule> Targe
 			if (TargetActor == nullptr)
 				continue;
 
-			if (!IsContinue)
+			if (!isContinue)
 				return;
-
+			
 			TraverseTargetActorAttached();
 			GenerateMaterial();
 			ReplaceTargetActorStaticMesh();
 		}
+
 	}
 }
 
 void FTranslucentMaterialLightRayModule::TraverseTargetActorAttached()
 {
-	if (!IsContinue)
+	if (!isContinue)
 		return;
 
 	CaptureCube = nullptr;
@@ -259,22 +283,8 @@ void FTranslucentMaterialLightRayModule::GenerateSceneCaptureCube()
 
 void FTranslucentMaterialLightRayModule::GenerateMaterial()
 {
-	if (!IsContinue)
+	if (!isContinue)
 		return;
-
-	// Load Material
-	FString Path = "Material'/TranslucentMaterialLightRay/M_Translucent.M_Translucent'";
-	M_Translucent = LoadObject<UMaterial>(nullptr, *Path);
-
-	// Error Message
-	if (!M_Translucent)
-	{
-		DialogText = FText::FromString("\
-				  Can not find M_Translucent!\n\n\
-Please re-install TranslucentMaterialLightRay plugin.\
-");
-		ErrorText(DialogText);
-	}
 
 	// Try to find Render Target Cube in Content Browser
 	FString PackageName = "/Game/TMLR/TMLR_TC/";
@@ -377,11 +387,16 @@ Please re-install TranslucentMaterialLightRay plugin.\
 	ErrorText(DialogText);
 	}
 
-
-
 	// Set Material Instance parameter
-	MI_Translucent->SetTextureParameterValueEditorOnly(FName("Reflection_Param"), RenderTargetCube);
-	MI_Translucent->SetTextureParameterValueEditorOnly(FName("Refraction_Param"), RenderTargetCube);
+	TArray<FMaterialParameterInfo> ParamInfo;
+	TArray<FGuid> ParamGuid;
+	MI_Translucent->GetAllTextureParameterInfo(ParamInfo, ParamGuid);
+	for (auto& Param : ParamInfo)
+	{
+		// UE_LOG(LogTemp, Warning, TEXT("%s"), *(Param.Name).ToString());
+		MI_Translucent->SetTextureParameterValueEditorOnly(Param.Name, RenderTargetCube);
+	}
+
 
 	// Save Material Instance asset
 	MI_Translucent->SetFlags(RF_Standalone);
@@ -391,7 +406,7 @@ Please re-install TranslucentMaterialLightRay plugin.\
 
 void FTranslucentMaterialLightRayModule::ReplaceTargetActorStaticMesh()
 {
-	if (!IsContinue)
+	if (!isContinue)
 		return;
 
 	// Traverse TargetActor to find StaticMeshComponent and replace Material
@@ -424,7 +439,7 @@ Can not find StaticMeshComponents of " + TargetActor->GetActorNameOrLabel() + ".
 				// Click No button or close window => break execution
 				else
 				{
-					IsContinue = false;
+					isContinue = false;
 				}
 			}
 		}
@@ -448,8 +463,8 @@ Scene capture will no longer support for real time.\n\
 			return;
 	}
 
-	// Traverse TwoDimensionalArray
-	for (int i = 0; i < TwoDimensionalArrayNum; ++i)
+	// Traverse TMLR_Array
+	for (int i = 0; i < TMLR_ArrayNum; ++i)
 	{
 		// Get USTRUCT FEncapsule
 		FEncapsule TargetArray = Target2DArray[i];
@@ -485,7 +500,7 @@ Scene capture will no longer support for real time.\n\
 void FTranslucentMaterialLightRayModule::ErrorText(FText DialogMessage)
 {
 	FMessageDialog::Open(EAppMsgType::Ok, DialogMessage);
-	IsContinue = false;
+	isContinue = false;
 }
 
 #undef LOCTEXT_NAMESPACE
