@@ -20,15 +20,15 @@ struct FEncapsule
 		ParentMaterial = LoadObject<UMaterial>(nullptr, *Path);
 	}
 	
-	// Parent material from material instance 
+	// Parent material from Material Instance 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FEncapsule")
 	UMaterial* ParentMaterial = nullptr;
 
-	// Add the actor which you want to generate material instance. 
+	// Add the actor which you want to generate Material Instance. 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FEncapsule")
 	TArray<AActor*> ArrayActor;
 	
-	// Choose render target cube resolution.
+	// Choose RenderTargetCube resolution.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FEncapsule", meta = (GetOptions = "GetResolutionOptions"))
 	FName Resolution;
 };
@@ -42,8 +42,8 @@ public:
 	// Sets default values for this actor's properties
 	ATMLR_Actor();
 
-	// If true, delete the SceneCaptureCube after generate material instance.
-	// You might enable this when you want to improve performance and ensure the actor position does not move.
+	// If true, delete the SceneCaptureCube after generate Material Instance.
+	// You might enable this when you want to improve performance and ensure the actor position does NOT move.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenerateMaterialInstance")
 	bool DeleteSceneCaptureCube;
 
